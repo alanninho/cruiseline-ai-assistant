@@ -13,9 +13,11 @@ dependencies = [
     "pdf2image>=1.17.0",
     "pdfplumber>=0.11.10",
     "pgvector>=0.5.0",
-    "psycopg2-binary>=2.9.13",
+    "psycopg[binary]>=3.3.6",
     "pypdf>=6.19.0",
+    "python-dotenv>=1.2.3",
     "requests>=2.34.2",
+    "sentence-transformers>=6.1.0",
     "sqlalchemy>=2.0.54",
     "uvicorn>=0.53.0",
 ]
@@ -23,3 +25,7 @@ dependencies = [
 [build-system]
 requires = ["uv_build>=0.12.15,<0.13.0"]
 build-backend = "uv_build"
+
+
+[tool.uv]
+package = false
