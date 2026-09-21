@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 import psycopg
 import os
+import requests
 from dotenv import load_dotenv
 from sentence_transformers import SentenceTransformer
 
@@ -17,6 +18,13 @@ def health_check():
 class QueryRequest(BaseModel):
     question: str
     top_k: int = 5
+
+class QueryResponse(BaseModel):
+    question: str
+    answer: str
+    sources: list
+
+SIMILARITY_THRESHOLD = 1.2
 
 @app.post("/query")
 def query(request: QueryRequest):
@@ -35,19 +43,39 @@ def query(request: QueryRequest):
         "SELECT text, source_type, source_file, metadata, embedding <-> %s::vector AS distance FROM chunks ORDER BY distance LIMIT %s",
         (query_embedding, request.top_k)
     )
-
-    results = []
-    for row in cur.fetchall():
-        text, source_type, source_file, metadata, distance = row
-        results.append({
-            "text": text,
-            "source_type": source_type,
-            "source_file": source_file,
-            "metadata": metadata,
-            "distance": round(distance, 3)
-        })
-
+    rows = cur.fetchall()
     cur.close()
     conn.close()
 
-    return {"question": request.question, "results": results}
+    # Guardrail: if even the best match is too far, don't hallucinate
+    if not rows or rows[0][4] > SIMILARITY_THRESHOLD:
+        return {
+            "question": request.question,
+            "answer": "I don't have enough information to answer that question confidently.",
+            "sources": []
+        }
+
+    context_chunks = [row[0] for row in rows]
+    context = "\n\n---\n\n".join(context_chunks)
+
+    prompt = f"""You are a helpful cruise assistant. Answer the question using ONLY the context below. If the context doesn't contain the answer, say so.
+
+Context:
+{context}
+
+Question: {request.question}
+
+Answer:"""
+
+    response = requests.post(
+        "http://localhost:11434/api/generate",
+        json={"model": "llama3.2:3b", "prompt": prompt, "stream": False}
+    )
+    answer = response.json()["response"]
+
+    sources = [
+        {"source_type": row[1], "source_file": row[2], "distance": round(row[4], 3)}
+        for row in rows
+    ]
+
+    return {"question": request.question, "answer": answer, "sources": sources}
