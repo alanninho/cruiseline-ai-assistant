@@ -116,11 +116,3 @@ Visit `http://localhost:3000` and start asking questions.
 - `pdfplumber` - table extraction (technical sheets)
 - Custom regex-based chunking strategies per document type (legal clauses, FAQ pairs, excursion records, venue tables)
 
-**Designed into the architecture, not yet wired in**
-- Elasticsearch (hybrid sparse search)
-- Neo4j (knowledge graph)
-- LangGraph (multi-agent orchestration), MCP tools
-- Kubernetes, Helm
-- MLflow, DVC, GitHub Actions (CI/CD)
-- Langfuse, Prometheus, Grafana (observability)
-- RAGAS (evaluation)
