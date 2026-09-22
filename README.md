@@ -43,11 +43,11 @@ No scraped PDFs, logos, or raw source documents are committed to this repository
 
 ## Known limitations
 
-- One ship's technical sheet (of five) uses a different page layout and isn't parsed by the current venue extractor - documented, not fixed
+- One ship's technical sheet (of five) uses a different page layout and isn't parsed by the current venue extractor — documented, not fixed
 - The similarity-threshold guardrail is loosely tuned; the primary defense against hallucination is prompt-level grounding, not the distance cutoff
 - Retrieval is dense-only (pgvector); hybrid sparse+dense search was designed but not implemented
-- No automated evaluation suite yet (RAGAS) - quality has been checked manually against known-good queries during development
-
+- No automated evaluation suite yet (RAGAS) — quality has been checked manually against known-good queries during development
+- **Cross-encoder reranking was implemented but didn't clearly improve answer quality in testing** — on broad policy questions, it sometimes demoted the most complete clause in favor of a more narrowly relevant but less useful one. Likely cause: reranking scores query-chunk relevance in isolation, with no notion of which chunk is the *most complete* answer to a broad question. Left in the codebase (togglable in principle) as a documented, tested finding rather than a proven improvement — a good example of why reranking effectiveness is corpus and query-dependent, not a guaranteed win.
 
 ## Running locally
 

@@ -4,12 +4,13 @@ import psycopg
 import os
 import requests
 from dotenv import load_dotenv
-from sentence_transformers import SentenceTransformer
+from sentence_transformers import SentenceTransformer, CrossEncoder
 
 load_dotenv()
 
 app = FastAPI()
 model = SentenceTransformer("all-MiniLM-L6-v2")
+reranker = CrossEncoder("cross-encoder/ms-marco-MiniLM-L-6-v2")
 
 
 from fastapi.middleware.cors import CORSMiddleware
@@ -52,7 +53,7 @@ def query(request: QueryRequest):
 
     cur.execute(
         "SELECT text, source_type, source_file, metadata, embedding <-> %s::vector AS distance FROM chunks ORDER BY distance LIMIT %s",
-        (query_embedding, request.top_k)
+        (query_embedding, 15)
     )
     rows = cur.fetchall()
     cur.close()
@@ -66,6 +67,10 @@ def query(request: QueryRequest):
             "sources": []
         }
 
+    pairs = [(request.question, row[0]) for row in rows]
+    scores = reranker.predict(pairs)
+    reranked = sorted(zip(rows, scores), key=lambda x: x[1], reverse=True)[:request.top_k]
+    rows = [r[0] for r in reranked]
     context_chunks = [row[0] for row in rows]
     context = "\n\n---\n\n".join(context_chunks)
 
