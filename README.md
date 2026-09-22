@@ -13,6 +13,8 @@ Ask questions about cabin types, booking policies, onboard venues, and shore exc
 
 ## Architecture
 
+![Architecture diagram](docs/cruise_assistant_architecture_diagram.png)
+
 Frontend (Next.js) → FastAPI → pgvector (dense retrieval) → Ollama (local LLM) → answer + sources
 
 **What's built and running:**
